@@ -1,6 +1,8 @@
 use core::panic;
 use std::fmt::Write;
+use std::fs::File;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 use anyhow::Result;
 use reqwest::*;
@@ -115,7 +117,6 @@ impl Runner {
         match self.config.os {
             OS::Windows => windows::fuzzy_finder(&self.config, str),
             OS::MacOS => macos::fuzzy_finder(&self.config, str),
-
         }
     }
 
@@ -135,6 +136,25 @@ impl Runner {
     async fn get_modules(&self) -> Result<String> {
         let mut buf = String::new();
 
+        if !self.recache_all {
+            // check if buf file exists
+            if let Ok(file) = File::open({
+                let mut t = self.config.current_dir.clone();
+                t.push("buf");
+                t
+            }) {
+                let sys_time_now = SystemTime::now();
+                let duration = sys_time_now.duration_since(file.metadata()?.modified()?)?;
+                if duration < std::time::Duration::new(300, 0) {
+                    return Ok(std::fs::read_to_string({
+                        let mut t = self.config.current_dir.clone();
+                        t.push("buf");
+                        t
+                    })?);
+                }
+            }
+        }
+
         // get all course ids/names in .env
         for course in &self.config.courses {
             // get module page of every course
@@ -145,7 +165,7 @@ impl Runner {
                     &self.config.canvas_api_url, course.id
                 ))
                 .bearer_auth(&self.config.token)
-                .query(&[("include[]", "items")])
+                .query(&[("include[]", "items"), ("per_page", "100")])
                 .send()
                 .await?
                 .json::<serde_json::Value>()
@@ -179,7 +199,15 @@ mod windows {
 
     pub fn fuzzy_finder(config: &Config, str: &str) -> String {
         // write buffer to current directory
-        std::fs::write("buf", str).unwrap();
+        std::fs::write(
+            {
+                let mut t = config.current_dir.clone();
+                t.push("buf");
+                t
+            },
+            str,
+        )
+        .unwrap();
 
         // Open kitty with fzf in the external files directory
         Command::new("pwsh")
@@ -221,15 +249,13 @@ mod macos {
 
         // Open kitty with fzf in the external files directory
         Command::new("kitty")
-            .args([
-                {
-                    let mut t = config.current_dir.clone();
-                    t.push("fzf-to-title-url-name.sh");
-                    t
-                }
-                .to_str()
-                .unwrap(),
-            ])
+            .args([{
+                let mut t = config.current_dir.clone();
+                t.push("fzf-to-title-url-name.sh");
+                t
+            }
+            .to_str()
+            .unwrap()])
             .output()
             .unwrap();
 
