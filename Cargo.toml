@@ -1,0 +1,16 @@
+[package]
+name = "canvas-fuzzy-finder"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.71"
+chrono = "0.4.26"
+dirs = "5.0.1"
+dotenv = "0.15.0"
+reqwest = { version = "0.11.18", features = ["json"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+tokio = { version = "1.28.2", features = ["full"] }
