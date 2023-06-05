@@ -38,6 +38,15 @@ impl OS {
 
 impl Config {
     pub fn new() -> Result<Self> {
+        let current_dir = {
+            let mut t = dirs::home_dir().unwrap();
+            t.push("git");
+            t.push("canvas-fuzzy-finder");
+            t
+        };
+
+        std::env::set_current_dir(&current_dir)?;
+
         // load environment variables, especially the `TOKEN`
         dotenv::dotenv()?;
 
@@ -56,13 +65,6 @@ impl Config {
             .collect();
 
         let os = OS::new();
-
-        let current_dir = {
-            let mut t = dirs::home_dir().unwrap();
-            t.push("git");
-            t.push("canvas-fuzzy-finder");
-            t
-        };
 
         Ok(Self {
             token,
