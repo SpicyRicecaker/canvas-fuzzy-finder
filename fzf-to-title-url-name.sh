@@ -1,0 +1,1 @@
+cat ~/git/canvas-fuzzy-finder/buf | fzf > ~/git/canvas-fuzzy-finder/title-url-name.txt

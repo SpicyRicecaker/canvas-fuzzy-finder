@@ -112,9 +112,8 @@ impl Runner {
     fn fuzzy_find(&self, str: &str) -> String {
         match self.config.os {
             OS::Windows => windows::fuzzy_finder(&self.config, str),
-            OS::MacOS => {
-                todo!()
-            }
+            OS::MacOS => macos::fuzzy_finder(&self.config, str),
+
         }
     }
 
@@ -124,7 +123,7 @@ impl Runner {
                 windows::open_link(url);
             }
             OS::MacOS => {
-                todo!()
+                macos::open_link(url);
             }
         }
     }
@@ -210,38 +209,40 @@ mod windows {
 }
 
 mod macos {
-    // pub fn fuzzy_finder_file_name(config: &Config) -> PathBuf {
-    //     // Open kitty with fzf in the external files directory
-    //     Command::new("pwsh")
-    //         .args([
-    //             "-WorkingDirectory",
-    //             config.external_files_directory.to_str().unwrap(),
-    //             "-File",
-    //             {
-    //                 let mut t = config.bookshelf_directory.clone();
-    //                 t.push("fzf-to-file.ps1");
-    //                 t
-    //             }
-    //             .to_str()
-    //             .unwrap(),
-    //         ])
-    //         .output()
-    //         .unwrap();
+    use std::process::Command;
 
-    //     let mut file = config.external_files_directory.clone();
+    use crate::Config;
 
-    //     file.push(
-    //         std::fs::read_to_string({
-    //             let mut t = config.bookshelf_directory.clone();
-    //             t.push("author-title.txt");
-    //             t
-    //         })
-    //         .unwrap()
-    //         .trim(),
-    //     );
+    pub fn fuzzy_finder(config: &Config, str: &str) -> String {
+        // write buffer to current directory
+        std::fs::write("buf", str).unwrap();
 
-    //     file
-    // }
+        // Open kitty with fzf in the external files directory
+        Command::new("kitty")
+            .args([
+                {
+                    let mut t = config.current_dir.clone();
+                    t.push("fzf-to-title-url-name.sh");
+                    t
+                }
+                .to_str()
+                .unwrap(),
+            ])
+            .output()
+            .unwrap();
+
+        std::fs::read_to_string({
+            let mut t = config.current_dir.clone();
+            t.push("title-url-name.txt");
+            t
+        })
+        .unwrap()
+        .trim()
+        .to_string()
+    }
+    pub fn open_link(url: &str) {
+        Command::new("open").arg(url).output().unwrap();
+    }
 }
 
 #[tokio::main]
