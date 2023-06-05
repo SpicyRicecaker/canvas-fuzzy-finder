@@ -137,33 +137,22 @@ impl Runner {
         // get all course ids/names in .env
         for course in &self.config.courses {
             // get module page of every course
-            let module = self
+            let modules = self
                 .client
                 .get(format!(
                     "{}/api/v1/courses/{}/modules",
                     &self.config.canvas_api_url, course.id
                 ))
                 .bearer_auth(&self.config.token)
+                .query(&[("include[]", "items")])
                 .send()
                 .await?
                 .json::<serde_json::Value>()
                 .await?;
 
             // for every item (or dropdown menu in modules)
-            for items in module.as_array().unwrap() {
-                // add each pages to our growing buffer
-                let items_url = items["items_url"].as_str().unwrap();
-
-                let pages = self
-                    .client
-                    .get(items_url)
-                    .bearer_auth(&self.config.token)
-                    .send()
-                    .await?
-                    .json::<serde_json::Value>()
-                    .await?;
-
-                for page in pages.as_array().unwrap() {
+            for module in modules.as_array().unwrap() {
+                for page in module["items"].as_array().unwrap() {
                     if page["title"].as_str().is_none() || page["html_url"].as_str().is_none() {
                         continue;
                     }
