@@ -249,13 +249,16 @@ mod macos {
 
         // Open kitty with fzf in the external files directory
         Command::new("kitty")
-            .args([{
-                let mut t = config.current_dir.clone();
-                t.push("fzf-to-title-url-name.sh");
-                t
-            }
-            .to_str()
-            .unwrap()])
+            .args([
+                "sh",
+                {
+                    let mut t = config.current_dir.clone();
+                    t.push("fzf-to-title-url-name.sh");
+                    t
+                }
+                .to_str()
+                .unwrap(),
+            ])
             .output()
             .unwrap();
 
