@@ -1,4 +1,4 @@
-ave you ever thought about how much frustration you could save if you could just grep all module items in all your canvas courses for the specific item you need, instead of having to navigate 5+ times from your homepage to the module page for your course in question?
+Have you ever thought about how much frustration you could save if you could just grep all module items in all your canvas courses for the specific item you need, instead of having to navigate 5+ times from your homepage to the module page for your course in question?
 
 Introducing Canvas Fuzzy Finder (CFF). 
 
