@@ -26,6 +26,7 @@ pub struct Config {
 enum OS {
     Windows,
     MacOS,
+    Linux
 }
 
 impl OS {
@@ -33,6 +34,7 @@ impl OS {
         match std::env::consts::OS {
             "windows" => OS::Windows,
             "macos" => OS::MacOS,
+            "linux" => OS::Linux,
             _ => panic!("OS NOT SUPPORTED"),
         }
     }
@@ -117,6 +119,7 @@ impl Runner {
         match self.config.os {
             OS::Windows => windows::fuzzy_finder(&self.config, str),
             OS::MacOS => macos::fuzzy_finder(&self.config, str),
+            OS::Linux => linux::fuzzy_finder(&self.config, str),
         }
     }
 
@@ -127,6 +130,9 @@ impl Runner {
             }
             OS::MacOS => {
                 macos::open_link(url);
+            }
+            OS::Linux => {
+                linux::open_link(url);
             }
         }
     }
@@ -273,6 +279,44 @@ mod macos {
     }
     pub fn open_link(url: &str) {
         Command::new("open").arg(url).output().unwrap();
+    }
+}
+
+mod linux {
+    use std::process::Command;
+
+    use crate::Config;
+
+    pub fn fuzzy_finder(config: &Config, str: &str) -> String {
+        // write buffer to current directory
+        std::fs::write("buf", str).unwrap();
+
+        // Open kitty with fzf in the external files directory
+        Command::new("kitty")
+            .args([
+                "sh",
+                {
+                    let mut t = config.current_dir.clone();
+                    t.push("fzf-to-title-url-name.sh");
+                    t
+                }
+                .to_str()
+                .unwrap(),
+            ])
+            .output()
+            .unwrap();
+
+        std::fs::read_to_string({
+            let mut t = config.current_dir.clone();
+            t.push("title-url-name.txt");
+            t
+        })
+        .unwrap()
+        .trim()
+        .to_string()
+    }
+    pub fn open_link(url: &str) {
+        Command::new("xdg-open").arg(url).output().unwrap();
     }
 }
 
